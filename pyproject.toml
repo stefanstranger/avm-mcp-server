@@ -1,0 +1,25 @@
+[project]
+name = "avm-mcp-server"
+version = "0.1.0"
+description = "MCP Server for discovering and exploring Azure Verified Modules (AVM)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp",
+    "requests",
+]
+authors = [
+    { name = "Stefan Stranger"}
+]
+license = { text = "MIT" }
+
+[project.urls]
+Homepage = "https://github.com/stefanstranger/avm-mcp-server"
+Repository = "https://github.com/stefanstranger/avm-mcp-server"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+avm-mcp-server = "server:mcp.run"
