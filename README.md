@@ -111,7 +111,43 @@ This MCP server solves these challenges by:
 
 ### 🔧 Claude Desktop Setup
 
+#### Option 1: Using uvx with GitHub Repository (Recommended)
+
+Use the following command to add the AVM MCP server to your local environment. This assumes uvx is in your $PATH; if not, then you need to provide the full path to uvx.
+
 Add the following to your `claude_desktop_config.json` file:
+
+```json
+{
+  "mcpServers": {
+    "avm-mcp-server": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/stefanstranger/avm-mcp-server",
+        "avm-mcp-server"
+      ]
+    }
+  }
+}
+```
+
+This approach:
+- ✅ No local installation required
+- ✅ Always uses the latest version from the main branch
+- ✅ No need to manage virtual environments
+- ✅ Works across different machines with the same config
+
+To use a specific version/tag, modify the GitHub URL:
+
+```json
+"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.0"
+```
+
+#### Option 2: Using Local Installation
+
+If you prefer to run from a local clone:
 
 ```json
 {
@@ -138,7 +174,23 @@ Add the following to your `claude_desktop_config.json` file:
 
 ## 🏃 Running the Server
 
-### Start MCP Server
+### Using uvx (No Installation Required)
+
+Run directly from GitHub:
+
+```powershell
+uvx --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server
+```
+
+Or with a specific version:
+
+```powershell
+uvx --from git+https://github.com/stefanstranger/avm-mcp-server@v0.1.0 avm-mcp-server
+```
+
+### Using Local Installation
+
+If you cloned the repository:
 
 ```powershell
 uv run .\server.py
@@ -146,7 +198,13 @@ uv run .\server.py
 
 ### Inspect MCP Server
 
-Using the MCP Inspector:
+Using the MCP Inspector with uvx:
+
+```powershell
+npx @modelcontextprotocol/inspector uvx --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server
+```
+
+Using the MCP Inspector with local installation:
 
 ```powershell
 npx @modelcontextprotocol/inspector uv run --with mcp[cli] mcp run c://github//avm-mcp-server//server.py
@@ -155,7 +213,7 @@ npx @modelcontextprotocol/inspector uv run --with mcp[cli] mcp run c://github//a
 Using mcptools:
 
 ```powershell
-mcptools web cmd /c "uv.exe run --with mcp[cli] --with requests mcp run c:\\github\\avm-mcp-server\\server.py"
+mcptools web cmd /c "uvx.exe --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server"
 ```
 
 ## 📖 Available Tools
