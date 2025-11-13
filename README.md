@@ -32,7 +32,7 @@ This MCP server solves these challenges by:
 
 ## 📋 Prerequisites
 
-- Python 3.13 or higher
+- Python 3.11 or higher
 - UV package manager
 - Internet connectivity (to access Microsoft Container Registry and GitHub)
 - Node.js and npm (for MCP inspector tools, optional)
