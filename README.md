@@ -1,0 +1,357 @@
+# 🏗️ avm-mcp-server
+
+MCP Server for discovering and exploring Azure Verified Modules (AVM) from the Bicep Public Registry.
+
+## 🎯 Overview
+
+This MCP server enables AI agents and tools to search, discover, and retrieve detailed information about Azure Verified Modules (AVM) via the Model Context Protocol (MCP). It connects directly to the Microsoft Container Registry (MCR) and GitHub to provide up-to-date module information, versions, parameters, and usage examples.
+
+## ❓ Why AVM MCP Server?
+
+Azure Verified Modules (AVM) are a collection of standardized, validated, and well-documented Infrastructure as Code (IaC) modules for deploying Azure resources using Bicep. However, discovering the right module and understanding its parameters can be challenging:
+
+- **Discovery Challenge**: With hundreds of AVM modules available, finding the right module for your use case requires searching through documentation
+- **Parameter Complexity**: Each module has numerous parameters with specific requirements and defaults
+- **Version Management**: Keeping track of module versions and updates across the registry
+- **Documentation Access**: Module documentation is scattered across GitHub repositories
+
+This MCP server solves these challenges by:
+
+- Providing fast, intelligent search across all AVM modules
+- Retrieving module versions directly from the registry
+- Extracting detailed parameter information and usage examples
+- Enabling AI agents to help you find and use the right modules
+
+## 🛠️ Features
+
+- **Search AVM Modules**: Intelligent search supporting multiple query formats (e.g., "key vault", "key-vault", "keyvault")
+- **List Module Versions**: Retrieve all available versions for any AVM module
+- **Module Details**: Extract resource types, parameters, and usage examples from module documentation
+- **Fast Filtering**: Optimized search that quickly narrows down results from thousands of repositories
+- **Direct Registry Access**: Connects to Microsoft Container Registry for real-time module information
+
+## 📋 Prerequisites
+
+- Python 3.13 or higher
+- UV package manager
+- Internet connectivity (to access Microsoft Container Registry and GitHub)
+- Node.js and npm (for MCP inspector tools, optional)
+
+### 1. Python
+
+- **Official Download Page:**  
+  [https://www.python.org/downloads/](https://www.python.org/downloads/)
+
+- **Direct Download for Python 3.13.5:**  
+  [Python 3.13.5 Release Page](https://www.python.org/downloads/release/python-3135/)
+
+- Download the installer for your OS (Windows, macOS, Linux) and follow the setup instructions.
+
+---
+
+### 2. UV (Python Package Manager)
+
+- **Official Documentation & Source:**  
+  [https://github.com/astral-sh/uv](https://github.com/astral-sh/uv)  
+  [UV Documentation](https://docs.astral.sh/uv/)
+
+- **Installation (Windows):**
+  ```powershell
+  irm https://astral.sh/uv/install.ps1 | iex
+  ```
+  Or, using pip (if you already have Python and pip installed):
+  ```powershell
+  pip install uv
+  ```
+
+- **Installation (macOS/Linux):**
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
+- **More Info:**  
+  [UV Installation Guide](https://docs.astral.sh/uv/getting-started/installation/)
+
+### 3. Claude Desktop (Optional)
+
+- **Official Download Page:**  
+  [https://claude.ai/download](https://claude.ai/download)
+
+- Download the installer for your OS (Windows, macOS) and follow the setup instructions.
+
+## 🚀 Installation
+
+1. Clone the repository:
+   ```powershell
+   git clone https://github.com/stefanstranger/avm-mcp-server.git
+   cd avm-mcp-server
+   ```
+
+2. Create a virtual environment:
+   ```powershell
+   uv venv .venv --python 3.13
+   ```
+
+3. Activate the virtual environment:
+   - **Windows PowerShell:**
+     ```powershell
+     .\.venv\Scripts\Activate.ps1
+     ```
+   - **macOS/Linux:**
+     ```bash
+     source .venv/bin/activate
+     ```
+
+4. Install dependencies:
+   ```powershell
+   uv pip install fastmcp requests
+   ```
+
+## ⚙️ Configuration
+
+### 🔧 Claude Desktop Setup
+
+Add the following to your `claude_desktop_config.json` file:
+
+```json
+{
+  "mcpServers": {
+    "avm-mcp-server": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp[cli]",
+        "--with",
+        "requests",
+        "mcp",
+        "run",
+        "C:\\Github\\avm-mcp-server\\server.py"
+      ]
+    }
+  }
+}
+```
+
+**Note**: Adjust the path in the last `args` element to match your installation location.
+
+## 🏃 Running the Server
+
+### Start MCP Server
+
+```powershell
+uv run .\server.py
+```
+
+### Inspect MCP Server
+
+Using the MCP Inspector:
+
+```powershell
+npx @modelcontextprotocol/inspector uv run --with mcp[cli] mcp run c://github//avm-mcp-server//server.py
+```
+
+Using mcptools:
+
+```powershell
+mcptools web cmd /c "uv.exe run --with mcp[cli] --with requests mcp run c:\\github\\avm-mcp-server\\server.py"
+```
+
+## 📖 Available Tools
+
+### 1. `list_avm_modules`
+
+Search and list Azure Verified Modules from the Bicep Public Registry.
+
+**Parameters:**
+
+- `modulename` (optional): Module name to filter by. Supports multiple formats:
+  - Exact match: `"storage-account"`
+  - Hyphenated: `"key-vault"`
+  - Space-separated: `"key vault"` (matches "key-vault", "keyvault", "key", or "vault")
+  - Compact: `"keyvault"`
+
+**Returns:**
+JSON array with module information including:
+
+- Module name (registry path)
+- Available versions
+- Description
+- Documentation link
+
+**Example Usage:**
+
+```text
+"List all AVM modules for storage accounts"
+"Find Azure Verified Modules for key vault"
+"Show me AVM modules related to networking"
+```
+
+**Example Response:**
+
+```json
+[
+  {
+    "name": "bicep/avm/res/storage/storage-account",
+    "versions": ["0.9.1", "0.9.0", "0.8.3"],
+    "description": "Azure Verified Module",
+    "documentation": "https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/storage/storage-account"
+  }
+]
+```
+
+### 2. `scrape_avm_module_details`
+
+Fetch detailed information from an AVM module's README documentation.
+
+**Parameters:**
+
+- `url` (required): GitHub URL of the AVM module repository
+  - Example: `https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/storage/storage-account`
+
+**Returns:**
+Formatted markdown containing:
+
+- **Resource Types**: Azure resources deployed by the module
+- **Parameters**: Complete parameter reference with types, defaults, and descriptions
+- **Usage Examples**: Large parameter set examples showing real-world usage
+
+**Example Usage:**
+
+```text
+"Get the details for the storage account AVM module"
+"Show me the parameters for the key vault module"
+"What resources does the virtual network module deploy?"
+```
+
+**Example Response:**
+
+```markdown
+## Resource Types
+
+| Resource Type | API Version |
+| :-- | :-- |
+| `Microsoft.Storage/storageAccounts` | [2022-09-01] |
+| `Microsoft.Storage/storageAccounts/blobServices` | [2022-09-01] |
+
+## Parameters
+
+**Required parameters**
+
+| Parameter | Type | Description |
+| :-- | :-- | :-- |
+| [`name`](#parameter-name) | string | Name of the Storage Account. |
+
+**Optional parameters**
+
+| Parameter | Type | Description |
+| :-- | :-- | :-- |
+| [`location`](#parameter-location) | string | Location for all resources. |
+...
+```
+
+## 💡 Usage Examples
+
+### Search for modules
+
+```text
+"Find all AVM modules for storage"
+"List Azure Verified Modules for Key Vault"
+"Show me networking modules"
+```
+
+### Get module versions
+
+```text
+"What versions are available for the storage account module?"
+"List all versions of the AVM key vault module"
+```
+
+### Explore module details
+
+```text
+"Show me the parameters for bicep/avm/res/storage/storage-account"
+"What resources does the virtual network module deploy?"
+"Get usage examples for the key vault module"
+```
+
+### Combined workflows
+
+```text
+"Find the storage account AVM module and show me its parameters"
+"I need to deploy a key vault - find the module and explain its parameters"
+"Search for virtual network modules and show me usage examples"
+```
+
+## 🔍 How It Works
+
+### Module Discovery
+
+1. Queries Microsoft Container Registry's catalog endpoint (`mcr.microsoft.com/v2/_catalog`)
+2. Filters repositories starting with `bicep/avm/`
+3. Applies intelligent search matching:
+   - Normalizes search terms (lowercase, hyphenated, compact)
+   - Matches any token from multi-word queries
+   - Returns all matching modules
+
+### Version Retrieval
+
+1. For each matching module, queries the registry's tags endpoint
+2. Retrieves all available semantic versions
+3. Returns version information with module metadata
+
+### Documentation Extraction
+
+1. Converts GitHub tree URLs to raw content URLs
+2. Fetches README.md content from the bicep-registry-modules repository
+3. Extracts relevant sections using regex patterns:
+   - Resource Types tables
+   - Parameters documentation
+   - Usage examples with large parameter sets
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **"Failed to fetch modules" error**
+   - Check internet connectivity
+   - Verify access to `mcr.microsoft.com`
+   - Check for firewall/proxy restrictions
+
+2. **"Could not fetch README.md" error**
+   - Verify the GitHub URL format is correct
+   - Ensure the module documentation exists in the repository
+   - Check internet connectivity to `raw.githubusercontent.com`
+
+3. **No modules found for search query**
+   - Try different search terms (e.g., "storage" instead of "storage-account")
+   - Use partial names (e.g., "key" to find "key-vault")
+   - List all modules without a filter first
+
+4. **Server won't start in Claude Desktop**
+   - Verify Python 3.13+ is installed
+   - Check that UV is properly installed
+   - Ensure the path in `claude_desktop_config.json` is correct
+   - Review Claude Desktop logs for detailed error messages
+
+## 📚 References
+
+- [Azure Verified Modules (AVM)](https://aka.ms/AVM)
+- [Bicep Registry Modules](https://github.com/Azure/bicep-registry-modules)
+- [Microsoft Container Registry](https://mcr.microsoft.com/)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [FastMCP](https://github.com/jlowin/fastmcp)
+- [MCP Tools](https://github.com/mcptools/mcptools)
+
+## 📄 License
+
+MIT License
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## ⚖️ Disclaimer
+
+This tool is not officially affiliated with or endorsed by Microsoft or the Azure Verified Modules team. It provides read-only access to publicly available module information from the Microsoft Container Registry and GitHub.
