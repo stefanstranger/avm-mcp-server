@@ -91,8 +91,8 @@ While the official Bicep MCP Server is excellent for **authoring Bicep templates
 - **Official Download Page:**  
   [https://www.python.org/downloads/](https://www.python.org/downloads/)
 
-- **Direct Download for Python 3.13.5:**  
-  [Python 3.13.5 Release Page](https://www.python.org/downloads/release/python-3135/)
+- **Direct Download for Python 3.11.14:**  
+  [Python 3.11.14 Release Page](https://www.python.org/downloads/release/python-31114/)
 
 - Download the installer for your OS (Windows, macOS, Linux) and follow the setup instructions.
 
@@ -183,6 +183,7 @@ Add the following to your `claude_desktop_config.json` file:
 ```
 
 This approach:
+
 - ✅ No local installation required
 - ✅ Always uses the latest version from the main branch
 - ✅ No need to manage virtual environments
@@ -191,7 +192,7 @@ This approach:
 To use a specific version/tag, modify the GitHub URL:
 
 ```json
-"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.0"
+"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.1"
 ```
 
 #### Option 2: Using Local Installation
@@ -442,12 +443,79 @@ Formatted markdown containing:
    - Ensure the path in `claude_desktop_config.json` is correct
    - Review Claude Desktop logs for detailed error messages
 
+## Publishing & Distribution
+
+This server is published to both PyPI and the MCP Registry for easy installation and discovery.
+
+### Installing from PyPI
+
+The recommended way to use this server is via `uvx` from PyPI:
+
+```powershell
+# Run directly without installation
+uvx avm-mcp-server
+
+# Or install globally
+uv tool install avm-mcp-server
+```
+
+### MCP Registry
+
+This server is registered in the [MCP Registry](https://registry.modelcontextprotocol.io/), making it discoverable by MCP clients and AI assistants.
+
+**Registry Entry**: `io.github.stefanstranger/avm-mcp-server`
+
+### For Developers: Publishing Updates
+
+The project uses automated GitHub Actions workflows to publish new versions:
+
+1. **Update Version Numbers**:
+   - `pyproject.toml` - Package version
+   - `server.json` - MCP registry version
+   - `server.py` - FastMCP instance version
+
+2. **Commit and Tag**:
+
+   ```powershell
+   git add pyproject.toml server.json server.py
+   git commit -m "Bump version to X.Y.Z"
+   git push
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+3. **Automated Workflow**:
+   - GitHub Actions builds the package
+   - Publishes to PyPI (requires `PYPI_API_TOKEN` secret)
+   - Authenticates with MCP Registry via GitHub OIDC
+   - Publishes to MCP Registry
+
+### Manual Publishing (First Time)
+
+For the initial PyPI release, publish manually:
+
+```powershell
+# Build the package
+uv build
+
+# Publish to PyPI (will prompt for token)
+uv publish
+```
+
+**Requirements**:
+
+- PyPI account and API token
+- The README includes the MCP validation line: `<!-- mcp-name: io.github.stefanstranger/avm-mcp-server -->`
+
+**Note**: PyPI versions cannot be re-uploaded. Always bump the version number for new releases.
+
 ## 📚 References
 
 - [Azure Verified Modules (AVM)](https://aka.ms/AVM)
 - [Bicep Registry Modules](https://github.com/Azure/bicep-registry-modules)
 - [Microsoft Container Registry](https://mcr.microsoft.com/)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
+- [MCP Registry](https://registry.modelcontextprotocol.io/)
 - [FastMCP](https://github.com/jlowin/fastmcp)
 - [MCP Tools](https://github.com/mcptools/mcptools)
 
