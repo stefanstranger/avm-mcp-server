@@ -105,15 +105,19 @@ While the official Bicep MCP Server is excellent for **authoring Bicep templates
   [UV Documentation](https://docs.astral.sh/uv/)
 
 - **Installation (Windows):**
+
   ```powershell
   irm https://astral.sh/uv/install.ps1 | iex
   ```
-  Or, using pip (if you already have Python and pip installed):
+
+    Or, using pip (if you already have Python and pip installed):
+
   ```powershell
   pip install uv
   ```
 
 - **Installation (macOS/Linux):**
+
   ```bash
   curl -LsSf https://astral.sh/uv/install.sh | sh
   ```
@@ -131,27 +135,33 @@ While the official Bicep MCP Server is excellent for **authoring Bicep templates
 ## 🚀 Installation
 
 1. Clone the repository:
+
    ```powershell
    git clone https://github.com/stefanstranger/avm-mcp-server.git
    cd avm-mcp-server
    ```
 
 2. Create a virtual environment:
+
    ```powershell
    uv venv .venv --python 3.13
    ```
 
 3. Activate the virtual environment:
    - **Windows PowerShell:**
+  
      ```powershell
      .\.venv\Scripts\Activate.ps1
      ```
+
    - **macOS/Linux:**
+
      ```bash
      source .venv/bin/activate
      ```
 
 4. Install dependencies:
+
    ```powershell
    uv pip install fastmcp requests
    ```
