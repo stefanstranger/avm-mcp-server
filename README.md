@@ -22,6 +22,55 @@ This MCP server solves these challenges by:
 - Extracting detailed parameter information and usage examples
 - Enabling AI agents to help you find and use the right modules
 
+## Comparison with Microsoft Bicep MCP Server
+
+Microsoft provides an [official Bicep MCP Server](https://github.com/Azure/bicep) that includes a `ListAvmMetadata` tool. So why create a separate AVM MCP Server?
+
+### Key Differences
+
+| Feature | Microsoft Bicep MCP Server | AVM MCP Server (This Project) |
+|---------|---------------------------|-------------------------------|
+| **Primary Focus** | Bicep language tools & Azure resource schemas | AVM module discovery & documentation |
+| **AVM Module Search** | Lists all modules (no filtering) | Intelligent search with multiple query formats |
+| **Module Details** | Basic metadata (name, description, versions) | Deep documentation extraction (parameters, resource types, examples) |
+| **Installation** | Requires .NET runtime & Bicep CLI | Lightweight Python with minimal dependencies |
+| **Response Format** | Newline-separated text summary | Structured JSON with rich metadata |
+| **Documentation Access** | External links only | Extracted and formatted markdown from module READMs |
+
+### Why This Server Exists
+
+While the official Bicep MCP Server is excellent for **authoring Bicep templates** and accessing Azure resource type schemas, it provides limited functionality for **discovering and understanding AVM modules**:
+
+1. **No Search Capability**: The `ListAvmMetadata` tool returns ALL modules without filtering, making it difficult to find relevant modules when there are hundreds available. This server provides intelligent search that handles variations like "key vault", "key-vault", and "keyvault".
+
+2. **Limited Documentation**: The official tool provides only basic metadata (name, description, versions, documentation URI). This server extracts the actual documentation content including:
+   - Complete parameter reference with types and descriptions
+   - Resource types deployed by the module
+   - Real-world usage examples with large parameter sets
+
+3. **Different Use Cases**: 
+   - **Use Bicep MCP Server when**: Writing Bicep code, checking Azure resource schemas, following Bicep best practices
+   - **Use AVM MCP Server when**: Discovering which AVM module to use, understanding module parameters, exploring module capabilities
+
+4. **Complementary Tools**: These servers can work together! Use the Bicep MCP Server for template authoring and this server for module discovery and documentation.
+
+### When to Use Each
+
+**Choose Microsoft Bicep MCP Server if you need:**
+
+- Bicep authoring best practices
+- Azure resource type schemas and API versions
+- Comprehensive Bicep ecosystem tools
+
+**Choose AVM MCP Server if you need:**
+
+- Find AVM modules for specific Azure services
+- Understand module parameters before using them
+- Extract usage examples and documentation
+- Quick filtered search across the AVM catalog
+
+**Use both servers together for a complete Bicep + AVM development experience!**
+
 ## 🛠️ Features
 
 - **Search AVM Modules**: Intelligent search supporting multiple query formats (e.g., "key vault", "key-vault", "keyvault")
@@ -388,7 +437,7 @@ Formatted markdown containing:
    - List all modules without a filter first
 
 4. **Server won't start in Claude Desktop**
-   - Verify Python 3.13+ is installed
+   - Verify Python 3.11+ is installed
    - Check that UV is properly installed
    - Ensure the path in `claude_desktop_config.json` is correct
    - Review Claude Desktop logs for detailed error messages
