@@ -202,7 +202,7 @@ This approach:
 To use a specific version/tag, modify the GitHub URL:
 
 ```json
-"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.1"
+"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.2"
 ```
 
 #### Option 2: Using Local Installation

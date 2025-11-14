@@ -3,12 +3,12 @@
   "name": "io.github.stefanstranger/avm-mcp-server",
   "title": "Azure Verified Modules (AVM) MCP Server",
   "description": "Discover and explore Azure Verified Modules from the Bicep Public Registry",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "avm-mcp-server",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "transport": {
         "type": "stdio"
       }
