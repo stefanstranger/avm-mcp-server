@@ -462,3 +462,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## ⚖️ Disclaimer
 
 This tool is not officially affiliated with or endorsed by Microsoft or the Azure Verified Modules team. It provides read-only access to publicly available module information from the Microsoft Container Registry and GitHub.
+
+<!-- mcp-name: io.github.stefanstranger/avm-mcp-server -->
