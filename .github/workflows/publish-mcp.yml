@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC authentication
-      contents: read
+      contents: write  # Required for creating releases
 
     steps:
       - name: Checkout code
@@ -49,3 +49,41 @@ jobs:
 
       - name: Publish to MCP Registry
         run: ./mcp-publisher publish
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          cat << EOF > release_notes.md
+          ## Azure Verified Modules MCP Server v$VERSION
+          
+          ### Installation
+          
+          \`\`\`powershell
+          # Using uvx (recommended)
+          uvx avm-mcp-server
+          
+          # Or install globally
+          uv tool install avm-mcp-server
+          \`\`\`
+          
+          ### What's Changed
+          
+          See the [README](https://github.com/stefanstranger/avm-mcp-server/blob/main/README.md) for full documentation.
+          
+          ### Links
+          
+          - 📦 [PyPI Package](https://pypi.org/project/avm-mcp-server/$VERSION/)
+          - 🔧 [MCP Registry](https://registry.modelcontextprotocol.io/)
+          - 📖 [Documentation](https://github.com/stefanstranger/avm-mcp-server#readme)
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release_notes.md
+          files: |
+            dist/*
+          generate_release_notes: true
+          append_body: true
