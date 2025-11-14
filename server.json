@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
   "name": "io.github.stefanstranger/avm-mcp-server",
   "title": "Azure Verified Modules (AVM) MCP Server",
-  "description": "Search, discover, and retrieve detailed information about Azure Verified Modules from the Bicep Public Registry",
+  "description": "Discover and explore Azure Verified Modules from the Bicep Public Registry",
   "version": "0.1.1",
   "packages": [
     {
