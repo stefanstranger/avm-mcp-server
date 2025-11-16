@@ -147,3 +147,43 @@ def scrape_avm_module_details(url: Optional[str] = None) -> str:
         return f"# Error\n\nError fetching {url}: {str(e)}"
     except Exception as e:
         return f"# Error\n\nError processing {url}: {str(e)}"
+
+
+@mcp.prompt()
+def find_avm_module_prompt(search_term: str | None = None) -> str:
+    """
+    A prompt to find Azure Verified Modules (AVM).
+    """
+    if search_term:
+        return f"""
+        Please find the AVM modules that match the search term '{search_term}'.
+        For each module, provide the name, versions, and a link to the documentation.
+        """
+    else:
+        return f"""
+        Please list all available Azure Verified Modules (AVM).
+        For each module, provide the name, versions, and a link to the documentation.
+        """
+
+
+@mcp.prompt()
+def get_avm_module_details_prompt(module_name: str) -> str:
+    """
+    A prompt to get the details of a specific AVM.
+    """
+    return f"""
+    Please provide the details for the AVM module '{module_name}'.
+    I am interested in the Resource Types, Parameters, and Usage Examples.
+    """
+
+
+@mcp.prompt()
+def suggest_avm_for_service_prompt(azure_service: str) -> str:
+    """
+A prompt to suggest an AVM for a specific Azure service.
+    """
+    return f"""
+    I need to deploy a '{azure_service}' in Azure.
+    Can you suggest a suitable Azure Verified Module (AVM) for this?
+    Please provide the module name and why you are suggesting it.
+    """
