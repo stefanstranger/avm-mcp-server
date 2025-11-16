@@ -202,7 +202,7 @@ This approach:
 To use a specific version/tag, modify the GitHub URL:
 
 ```json
-"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.2"
+"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.3"
 ```
 
 #### Option 2: Using Local Installation
@@ -367,6 +367,50 @@ Formatted markdown containing:
 | :-- | :-- | :-- |
 | [`location`](#parameter-location) | string | Location for all resources. |
 ...
+```
+
+## 📖 Available Prompts
+
+### 1. `find_avm_module_prompt`
+
+A prompt to find Azure Verified Modules (AVM).
+
+**Parameters:**
+
+- `search_term` (optional): The search term to use to find AVM modules.
+
+**Example Usage:**
+
+```text
+"Find AVM modules for 'storage account'"
+```
+
+### 2. `get_avm_module_details_prompt`
+
+A prompt to get the details of a specific AVM.
+
+**Parameters:**
+
+- `module_name` (required): The name of the AVM module.
+
+**Example Usage:**
+
+```text
+"Get details for the 'storage-account' AVM module"
+```
+
+### 3. `suggest_avm_for_service_prompt`
+
+A prompt to suggest an AVM for a specific Azure service.
+
+**Parameters:**
+
+- `azure_service` (required): The Azure service to find an AVM for.
+
+**Example Usage:**
+
+```text
+"Suggest an AVM for 'Azure Key Vault'"
 ```
 
 ## 💡 Usage Examples

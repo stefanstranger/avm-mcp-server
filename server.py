@@ -4,7 +4,7 @@ import re
 from typing import Optional
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("AVM MCP Server", "0.1.2")
+mcp = FastMCP("AVM MCP Server", "0.1.3")
 
 
 @mcp.tool()
@@ -174,6 +174,7 @@ def get_avm_module_details_prompt(module_name: str) -> str:
     return f"""
     Please provide the details for the AVM module '{module_name}'.
     I am interested in the Resource Types, Parameters, and Usage Examples.
+    Make sure you include the latest version available in the Usage Examples.
     """
 
 
