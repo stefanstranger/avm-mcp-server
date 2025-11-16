@@ -48,7 +48,7 @@ While the official Bicep MCP Server is excellent for **authoring Bicep templates
    - Resource types deployed by the module
    - Real-world usage examples with large parameter sets
 
-3. **Different Use Cases**: 
+3. **Different Use Cases**:
    - **Use Bicep MCP Server when**: Writing Bicep code, checking Azure resource schemas, following Bicep best practices
    - **Use AVM MCP Server when**: Discovering which AVM module to use, understanding module parameters, exploring module capabilities
 
@@ -192,6 +192,25 @@ Add the following to your `claude_desktop_config.json` file:
 }
 ```
 
+or mcp.json for Visual Code mcp configuration.
+
+```json
+{
+ "servers": {
+  "avm-mcp-server-github": {
+   "type": "stdio",
+   "command": "uvx",
+   "args": [
+    "--from",
+    "git+https://github.com/stefanstranger/avm-mcp-server@v0.1.3",
+    "avm-mcp-server"
+   ]
+  }
+ },
+ "inputs": []
+}
+```
+
 This approach:
 
 - ✅ No local installation required
@@ -245,7 +264,7 @@ uvx --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server
 Or with a specific version:
 
 ```powershell
-uvx --from git+https://github.com/stefanstranger/avm-mcp-server@v0.1.0 avm-mcp-server
+uvx --from git+https://github.com/stefanstranger/avm-mcp-server@v0.1.3 avm-mcp-server
 ```
 
 ### Using Local Installation
