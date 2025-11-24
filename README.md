@@ -275,6 +275,84 @@ If you cloned the repository:
 uv run .\server.py
 ```
 
+### Running with Different Transports
+
+The server now supports multiple transport methods for different use cases:
+
+#### 1. STDIO Transport (Default)
+
+Standard input/output - ideal for Claude Desktop and MCP Inspector:
+
+```bash
+python server.py --transport stdio
+```
+
+This is the default mode and is used when no transport is specified.
+
+#### 2. HTTP Transport
+
+Streamable HTTP transport - ideal for web applications and REST API integrations:
+
+```bash
+python server.py --transport http --host 0.0.0.0 --port 8080
+```
+
+Test the server is running:
+```bash
+# Simple tools listing endpoint (GET request)
+curl http://localhost:8080/tools
+
+# MCP protocol endpoint (requires POST with JSON-RPC format)
+curl -X POST http://localhost:8080/mcp/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2024-11-05",
+      "capabilities": {},
+      "clientInfo": {"name": "test-client", "version": "1.0.0"}
+    }
+  }'
+```
+
+**Note**: The MCP endpoint (`/mcp/`) requires a trailing slash and expects POST requests with JSON-RPC formatted data. For easier testing, use the convenience tools endpoint (`/tools`) or the example script:
+
+```bash
+python example_http_usage.py
+```
+
+#### 3. SSE Transport
+
+Server-Sent Events transport - ideal for real-time streaming applications:
+
+```bash
+python server.py --transport sse --host 0.0.0.0 --port 8080
+```
+
+#### Additional Options
+
+- `--debug`: Enable debug logging
+- `--host`: Host address to bind to (default: 0.0.0.0 for HTTP/SSE)
+- `--port`: Port to use (default: 8080 for HTTP/SSE)
+
+Example with debug mode:
+```bash
+python server.py --transport http --port 8081 --debug
+```
+
+#### Configuration via Environment Variables
+
+You can also configure the server using a `.env` file:
+
+```env
+MCP_HOST=0.0.0.0
+MCP_PORT=8080
+MCP_DEBUG=false
+LOG_LEVEL=INFO
+```
+
 ### Inspect MCP Server
 
 Using the MCP Inspector with uvx:

@@ -1,2 +1,19 @@
+# Core dependencies
+requests>=2.28.0
+fastapi>=0.89.0
+uvicorn>=0.20.0
+starlette>=0.25.0
+pydantic>=1.10.0
+
+# MCP server
+mcp-server>=0.1.0
+
+# MCP transport dependencies
+anyio>=3.6.0
+nest-asyncio>=1.5.6
+
+# Utilities
+tabulate>=0.9.0
+python-dotenv>=0.21.0
 fastmcp
-requests
+pydantic-settings

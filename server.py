@@ -1,8 +1,34 @@
+import logging
+import logging.config
+import uvicorn
 import requests
 import json
 import re
+import argparse
+import asyncio
 from typing import Optional
 from mcp.server.fastmcp import FastMCP
+from starlette.applications import Starlette
+from starlette.routing import Mount, Route
+from starlette.responses import JSONResponse, Response
+from starlette.endpoints import HTTPEndpoint
+
+# Import configuration
+from config import settings, logging_config
+
+# Configure logging
+logging.config.dictConfig(logging_config)
+logger = logging.getLogger(__name__)
+
+# Configure debug mode based on settings
+if settings.MCP_DEBUG:
+    logger.setLevel(logging.DEBUG)
+    logger.debug("DEBUG mode activated")
+
+def log(message: str, level: str = "info"):
+    """Helper function for consistent logging."""
+    log_func = getattr(logger, level.lower(), logger.info)
+    log_func(message)
 
 mcp = FastMCP("AVM MCP Server", "0.1.3")
 
@@ -46,7 +72,7 @@ def list_avm_modules(modulename: Optional[str] = None) -> str:
             if search_terms and not any(term in repo_lower for term in search_terms):
                 continue
 
-            print(f"Processing: {repo}")
+            log(f"Processing: {repo}")
             tags_response = requests.get(f"https://mcr.microsoft.com/v2/{repo}/tags/list")
             tags_response.raise_for_status()
             tags_data = tags_response.json()
@@ -97,7 +123,7 @@ def scrape_avm_module_details(url: Optional[str] = None) -> str:
         # Construct raw GitHub URL for README.md using refs/heads/ format
         raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/refs/heads/{branch}/{path}/README.md"
 
-        print(f"Fetching: {raw_url}")
+        log(f"Fetching: {raw_url}")
 
         # Fetch the raw markdown content
         response = requests.get(raw_url, timeout=10)
@@ -188,3 +214,187 @@ A prompt to suggest an AVM for a specific Azure service.
     Can you suggest a suitable Azure Verified Module (AVM) for this?
     Please provide the module name and why you are suggesting it.
     """
+
+
+# Endpoint to list available tools in the MCP
+class ToolsEndpoint(HTTPEndpoint):
+    """
+    Endpoint to list available tools in the MCP.
+    
+    This endpoint returns information about all registered tools
+    in the MCP, including their names, descriptions, and expected parameters.
+    """
+    async def get(self, request):
+        tools_list = await mcp.list_tools()
+        # Convert Tool objects to dictionaries for JSON serialization
+        tools_dict = {
+            "tools": [
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "inputSchema": tool.inputSchema.model_dump() if hasattr(tool.inputSchema, 'model_dump') else tool.inputSchema
+                }
+                for tool in tools_list
+            ]
+        }
+        return JSONResponse(tools_dict)
+
+
+async def run_stdio() -> None:
+    """
+    Run the MCP server with STDIO transport.
+    """
+    log("Starting MCP server with STDIO transport")
+    log("Server will communicate via standard input/output")
+    
+    from mcp.server.stdio import stdio_server
+    
+    async with stdio_server() as (read_stream, write_stream):
+        await mcp._mcp_server.run(
+            read_stream, 
+            write_stream, 
+            mcp._mcp_server.create_initialization_options()
+        )
+
+
+def parse_arguments():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Run the AVM MCP server with different transport methods."
+    )
+    parser.add_argument(
+        "--transport",
+        type=str,
+        choices=["sse", "stdio", "http"],
+        default="http",
+        help="Transport method to use: 'sse' (Server-Sent Events), 'stdio' (Standard I/O), or 'http' (Streamable HTTP). Default: stdio",
+    )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=None,
+        help=f"Host address to bind to (default: {settings.MCP_HOST})",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help=f"Port to use for SSE/HTTP transport (default: {settings.MCP_PORT}). Ignored for stdio transport.",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug mode",
+    )
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    
+    # Override settings with command-line arguments if provided
+    if args.debug:
+        settings.MCP_DEBUG = True
+        logger.setLevel(logging.DEBUG)
+    
+    log(f"Debug mode: {'ON' if settings.MCP_DEBUG else 'OFF'}")
+    log(f"Transport: {args.transport.upper()}")
+    
+    # For stdio transport, use asyncio.run
+    if args.transport == "stdio":
+        asyncio.run(run_stdio(), debug=settings.MCP_DEBUG)
+    else:
+        # For HTTP and SSE transports, we need to handle the event loop differently
+        # because uvicorn.run() creates its own event loop
+        import nest_asyncio
+        nest_asyncio.apply()
+        
+        # Use settings defaults if not provided
+        host = args.host or settings.MCP_HOST
+        port = args.port or settings.MCP_PORT
+        
+        if args.transport == "http":
+            # Streamable HTTP transport
+            log(f"Starting MCP server with Streamable HTTP transport at http://{host}:{port}")
+            log(f"MCP Endpoint: http://{host}:{port}/mcp/")
+            log(f"Tools Endpoint: http://{host}:{port}/tools")
+            
+            from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+            import contextlib
+            from starlette.types import Receive, Scope, Send
+            from typing import AsyncIterator
+            
+            session_manager = StreamableHTTPSessionManager(
+                app=mcp._mcp_server,
+                event_store=None,
+                json_response=True,
+                stateless=True,  # Changed to False to maintain session state
+            )
+            
+            async def handle_streamable_http(scope: Scope, receive: Receive, send: Send) -> None:
+                await session_manager.handle_request(scope, receive, send)
+            
+            @contextlib.asynccontextmanager
+            async def lifespan(app: Starlette) -> AsyncIterator[None]:
+                """Context manager for session manager."""
+                async with session_manager.run():
+                    try:
+                        yield
+                    finally:
+                        log("Application shutting down...")
+            
+            starlette_app = Starlette(
+                debug=settings.MCP_DEBUG,
+                routes=[
+                    Mount("/mcp/", app=handle_streamable_http),  # Added trailing slash
+                    Route("/tools", ToolsEndpoint),
+                ],
+                lifespan=lifespan,
+            )
+            
+            uvicorn.run(
+                starlette_app, 
+                host=host, 
+                port=port,
+                log_level="debug" if settings.MCP_DEBUG else settings.LOG_LEVEL.lower()
+            )
+        
+        elif args.transport == "sse":
+            # SSE transport
+            log(f"Starting MCP server with SSE transport at http://{host}:{port}")
+            log(f"SSE Endpoint: http://{host}:{port}/sse")
+            log(f"Messages Endpoint: http://{host}:{port}/messages/")
+            log(f"Tools Endpoint: http://{host}:{port}/tools")
+            
+            from mcp.server.sse import SseServerTransport
+            
+            sse = SseServerTransport("/messages/")
+            
+            async def handle_sse(request):
+                async with sse.connect_sse(
+                    request.scope, 
+                    request.receive, 
+                    request._send
+                ) as (read_stream, write_stream):
+                    await mcp._mcp_server.run(
+                        read_stream, 
+                        write_stream, 
+                        mcp._mcp_server.create_initialization_options()
+                    )
+                return Response(status_code=204)
+            
+            starlette_app = Starlette(
+                debug=settings.MCP_DEBUG,
+                routes=[
+                    Route("/sse", endpoint=handle_sse),
+                    Mount("/messages/", app=sse.handle_post_message),
+                    Route("/tools", ToolsEndpoint),
+                ],
+            )
+            
+            uvicorn.run(
+                starlette_app, 
+                host=host, 
+                port=port,
+                log_level="debug" if settings.MCP_DEBUG else settings.LOG_LEVEL.lower()
+            )
