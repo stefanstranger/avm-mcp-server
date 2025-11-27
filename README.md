@@ -202,7 +202,7 @@ or mcp.json for Visual Code mcp configuration.
    "command": "uvx",
    "args": [
     "--from",
-    "git+https://github.com/stefanstranger/avm-mcp-server@v0.1.3",
+    "git+https://github.com/stefanstranger/avm-mcp-server@v0.1.4",
     "avm-mcp-server"
    ]
   }
@@ -221,7 +221,7 @@ This approach:
 To use a specific version/tag, modify the GitHub URL:
 
 ```json
-"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.3"
+"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.4"
 ```
 
 #### Option 2: Using Local Installation
@@ -264,7 +264,7 @@ uvx --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server
 Or with a specific version:
 
 ```powershell
-uvx --from git+https://github.com/stefanstranger/avm-mcp-server@v0.1.3 avm-mcp-server
+uvx --from git+https://github.com/stefanstranger/avm-mcp-server@v0.1.4 avm-mcp-server
 ```
 
 ### Using Local Installation

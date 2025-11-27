@@ -30,7 +30,7 @@ def log(message: str, level: str = "info"):
     log_func = getattr(logger, level.lower(), logger.info)
     log_func(message)
 
-mcp = FastMCP("AVM MCP Server", "0.1.3")
+mcp = FastMCP("AVM MCP Server", "0.1.4")
 
 
 @mcp.tool()
