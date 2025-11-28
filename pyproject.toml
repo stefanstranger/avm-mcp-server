@@ -28,3 +28,17 @@ only-include = ["server.py", "config.py"]
 
 [project.scripts]
 avm-mcp-server = "server:mcp.run"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+    "tomli>=2.0.0;python_version<'3.11'",
+    "packaging>=21.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v"
