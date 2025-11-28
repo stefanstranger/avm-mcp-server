@@ -67,3 +67,15 @@ class TestLoggingConfig:
         from config import logging_config
         assert "default" in logging_config["formatters"]
         assert "format" in logging_config["formatters"]["default"]
+
+    def test_logging_uses_stderr(self):
+        """Test that logging outputs to stderr, not stdout.
+        
+        This is critical for MCP STDIO transport - stdout must be
+        reserved for JSON-RPC messages only.
+        """
+        from config import logging_config
+        handler = logging_config["handlers"]["console"]
+        assert handler["stream"] == "ext://sys.stderr", (
+            "Logging must use stderr to avoid interfering with MCP STDIO transport"
+        )
