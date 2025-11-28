@@ -7,6 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "fastmcp",
     "requests",
+    "pydantic-settings",
 ]
 authors = [
     { name = "Stefan Stranger"}
@@ -23,7 +24,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]
-only-include = ["server.py"]
+only-include = ["server.py", "config.py"]
 
 [project.scripts]
 avm-mcp-server = "server:mcp.run"
