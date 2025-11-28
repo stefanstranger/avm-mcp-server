@@ -594,6 +594,80 @@ A prompt to suggest an AVM for a specific Azure service.
    - Ensure the path in `claude_desktop_config.json` is correct
    - Review Claude Desktop logs for detailed error messages
 
+## 🧪 Testing
+
+The project includes a comprehensive test suite to ensure code quality and catch issues before release.
+
+### Running Tests
+
+```powershell
+# Install dev dependencies
+uv sync --dev
+
+# Run all tests
+uv run pytest
+
+# Run tests with verbose output
+uv run pytest -v
+
+# Run specific test file
+uv run pytest tests/test_server.py
+
+# Run tests excluding slow tests
+uv run pytest -m "not slow"
+```
+
+### Test Categories
+
+| Test File | Purpose |
+|-----------|---------|
+| `tests/test_imports.py` | Verifies all modules can be imported correctly |
+| `tests/test_config.py` | Tests configuration settings and environment variable overrides |
+| `tests/test_server.py` | Tests server functions, MCP tools, prompts, and argument parsing |
+| `tests/test_package.py` | Validates `pyproject.toml` includes all required files and dependencies |
+| `tests/test_version.py` | Ensures version is bumped before release |
+
+### Key Tests
+
+- **Import Tests**: Catch missing dependencies or modules not included in the package (like the `config.py` issue)
+- **Package Validation**: Ensures `pyproject.toml` correctly includes all files needed for distribution
+- **Version Validation**: Compares local version against PyPI to ensure you've bumped the version before publishing
+
+### Continuous Integration
+
+Tests run automatically on:
+
+- Every push to `main` and `feature/**` branches
+- Every pull request to `main`
+- Before publishing to PyPI (publishing is blocked if tests fail)
+
+The CI workflow tests against Python 3.10, 3.11, 3.12, and 3.13 to ensure compatibility.
+
+### Writing New Tests
+
+When adding new functionality:
+
+1. Add tests in the appropriate test file or create a new one in `tests/`
+2. Use pytest fixtures from `tests/conftest.py` for common test data
+3. Mock external API calls using `unittest.mock.patch`
+4. Run tests locally before pushing
+
+Example test structure:
+
+```python
+from unittest.mock import patch, MagicMock
+
+class TestMyFeature:
+    """Tests for my new feature."""
+
+    @patch('server.requests.get')
+    def test_feature_success(self, mock_get):
+        """Test successful scenario."""
+        mock_get.return_value = MagicMock(json=lambda: {"data": "test"})
+        # Your test code here
+        assert result == expected
+```
+
 ## Publishing & Distribution
 
 This server is published to both PyPI and the MCP Registry for easy installation and discovery.
