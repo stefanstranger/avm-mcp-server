@@ -2,11 +2,43 @@ name: Publish to MCP Registry
 
 on:
   push:
-    tags: ["v*"]  # Triggers on version tags like v1.0.0
+    branches: [main]
+    paths:
+      - 'pyproject.toml'  # Only trigger when version file changes
 
 jobs:
+  # Check if version was bumped and needs publishing
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tag comparison
+
+      - name: Check if version needs publishing
+        id: check
+        run: |
+          # Extract version from pyproject.toml
+          VERSION=$(grep -Po '(?<=^version = ")[^"]*' pyproject.toml)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Check if tag already exists
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists, skipping publish"
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          else
+            echo "New version $VERSION detected, will publish"
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          fi
+
   # Run tests before publishing
   test:
+    needs: check-version
+    if: needs.check-version.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,11 +67,12 @@ jobs:
           uv run pytest tests/ -v --tb=short
 
   publish:
-    needs: test  # Only run after tests pass
+    needs: [check-version, test]
+    if: needs.check-version.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC authentication
-      contents: write  # Required for creating releases
+      contents: write  # Required for creating releases and tags
 
     steps:
       - name: Checkout code
@@ -55,6 +88,15 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
+      - name: Create Git Tag
+        env:
+          VERSION: ${{ needs.check-version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
       - name: Build package
         run: |
           uv build
@@ -66,8 +108,9 @@ jobs:
           uv publish
 
       - name: Update server.json version
+        env:
+          VERSION: ${{ needs.check-version.outputs.version }}
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
           python -c "import json; data = json.load(open('server.json')); data['version'] = '$VERSION'; data['packages'][0]['version'] = '$VERSION'; json.dump(data, open('server.json', 'w'), indent=2)"
 
       - name: Install MCP Publisher
@@ -81,10 +124,9 @@ jobs:
         run: ./mcp-publisher publish
 
       - name: Generate Release Notes
-        id: release_notes
+        env:
+          VERSION: ${{ needs.check-version.outputs.version }}
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
           cat << EOF > release_notes.md
           ## Azure Verified Modules MCP Server v$VERSION
           
@@ -100,7 +142,7 @@ jobs:
           
           ### What's Changed
           
-          See the [README](https://github.com/stefanstranger/avm-mcp-server/blob/main/README.md) for full documentation.
+          See the [CHANGELOG](https://github.com/stefanstranger/avm-mcp-server/blob/main/CHANGELOG.md) for details.
           
           ### Links
           
@@ -112,6 +154,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ needs.check-version.outputs.version }}
           body_path: release_notes.md
           files: |
             dist/*

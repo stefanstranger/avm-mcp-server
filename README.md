@@ -355,22 +355,79 @@ LOG_LEVEL=INFO
 
 ### Inspect MCP Server
 
-Using the MCP Inspector with uvx:
+The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) is a useful tool for testing and debugging MCP servers.
+
+#### STDIO Transport (Default)
+
+Using uvx from GitHub:
 
 ```powershell
 npx @modelcontextprotocol/inspector uvx --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server
 ```
 
-Using the MCP Inspector with local installation:
+Using local installation:
 
 ```powershell
 npx @modelcontextprotocol/inspector uv run --with mcp[cli] mcp run c://github//avm-mcp-server//server.py
 ```
 
-Using mcptools:
+#### HTTP Transport
+
+First, start the server in HTTP mode:
 
 ```powershell
+python server.py --transport http --port 8080
+```
+
+Then open the MCP Inspector web UI and connect to the HTTP endpoint:
+
+```powershell
+npx @modelcontextprotocol/inspector
+```
+
+In the Inspector UI, enter `http://localhost:8080/mcp/` as the server URL and select "Streamable HTTP" as the transport type.
+
+Alternatively, use curl to verify the server is running:
+
+```powershell
+# Check the tools endpoint
+curl http://localhost:8080/tools
+
+# Or test the MCP endpoint directly
+curl -X POST http://localhost:8080/mcp/ `
+  -H "Content-Type: application/json" `
+  -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}'
+```
+
+#### SSE Transport
+
+First, start the server in SSE mode:
+
+```powershell
+python server.py --transport sse --port 8080
+```
+
+Then open the MCP Inspector web UI:
+
+```powershell
+npx @modelcontextprotocol/inspector
+```
+
+In the Inspector UI, enter `http://localhost:8080/sse` as the server URL and select "SSE" as the transport type.
+
+#### Using mcptools
+
+[mcptools](https://github.com/mcptools/mcptools) provides an alternative way to inspect MCP servers:
+
+```powershell
+# STDIO transport
 mcptools web cmd /c "uvx.exe --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server"
+
+# List tools
+mcptools tools cmd /c "uvx.exe --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server"
+
+# Call a specific tool
+mcptools call list_avm_modules --modulename "storage" cmd /c "uvx.exe --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server"
 ```
 
 ## 📖 Available Tools
@@ -692,28 +749,33 @@ This server is registered in the [MCP Registry](https://registry.modelcontextpro
 
 ### For Developers: Publishing Updates
 
-The project uses automated GitHub Actions workflows to publish new versions:
+The project uses automated GitHub Actions workflows to publish new versions. Publishing is triggered automatically when a feature branch is merged to `main` with a version bump.
 
-1. **Update Version Numbers**:
+1. **Update Version Numbers** (in your feature branch):
    - `pyproject.toml` - Package version
-   - `server.json` - MCP registry version
    - `server.py` - FastMCP instance version
 
-2. **Commit and Tag**:
+2. **Create PR and Merge**:
 
    ```powershell
-   git add pyproject.toml server.json server.py
+   # On your feature branch
+   git add pyproject.toml server.py
    git commit -m "Bump version to X.Y.Z"
    git push
-   git tag vX.Y.Z
-   git push origin vX.Y.Z
+   # Create PR and merge to main
    ```
 
-3. **Automated Workflow**:
-   - GitHub Actions builds the package
-   - Publishes to PyPI (requires `PYPI_API_TOKEN` secret)
+3. **Automated Workflow** (triggered on merge to main):
+   - Detects version change in `pyproject.toml`
+   - Runs all tests across Python 3.10-3.13
+   - Creates git tag `vX.Y.Z` automatically
+   - Builds and publishes to PyPI
+   - Updates `server.json` with new version
    - Authenticates with MCP Registry via GitHub OIDC
    - Publishes to MCP Registry
+   - Creates GitHub Release with release notes
+
+**Note**: The workflow only triggers when `pyproject.toml` changes and the version doesn't already have a tag. This prevents duplicate publishes.
 
 ### Manual Publishing (First Time)
 
