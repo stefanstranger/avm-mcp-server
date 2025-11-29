@@ -317,11 +317,8 @@ curl -X POST http://localhost:8080/mcp/ \
   }'
 ```
 
-**Note**: The MCP endpoint (`/mcp/`) requires a trailing slash and expects POST requests with JSON-RPC formatted data. For easier testing, use the convenience tools endpoint (`/tools`) or the example script:
+**Note**: The MCP endpoint (`/mcp/`) requires a trailing slash and expects POST requests with JSON-RPC formatted data.
 
-```bash
-python example_http_usage.py
-```
 
 #### 3. SSE Transport
 
@@ -352,6 +349,48 @@ MCP_PORT=8080
 MCP_DEBUG=false
 LOG_LEVEL=INFO
 ```
+
+### Running with Docker
+
+For containerized deployments, use the included Dockerfile:
+
+```bash
+# Build the image
+docker build -t avm-mcp-server .
+
+# Run the container
+docker run -p 8080:8080 avm-mcp-server
+```
+
+The container runs in HTTP transport mode on port 8080 by default. To use a different port:
+
+```bash
+docker run -p 9000:8080 avm-mcp-server
+```
+
+To run with SSE transport instead:
+
+```bash
+docker run -p 8080:8080 avm-mcp-server python server.py --transport sse --port 8080
+```
+
+### Quick Setup for Linux/macOS
+
+For local development on Linux or macOS, use the setup script to quickly create a virtual environment and install dependencies:
+
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+This script:
+
+- Checks for Python 3 installation
+- Creates a virtual environment (`.venv`)
+- Installs all dependencies from `requirements.txt`
+- Verifies imports work correctly
+
+**Note**: For Windows users or those using UV, follow the standard [Installation](#-installation) steps instead.
 
 ### Inspect MCP Server
 
@@ -666,29 +705,20 @@ uv run pytest
 
 # Run tests with verbose output
 uv run pytest -v
-
-# Run specific test file
-uv run pytest tests/test_server.py
-
-# Run tests excluding slow tests
-uv run pytest -m "not slow"
 ```
 
-### Test Categories
+### What the Tests Check
 
-| Test File | Purpose |
-|-----------|---------|
-| `tests/test_imports.py` | Verifies all modules can be imported correctly |
-| `tests/test_config.py` | Tests configuration settings and environment variable overrides |
-| `tests/test_server.py` | Tests server functions, MCP tools, prompts, and argument parsing |
-| `tests/test_package.py` | Validates `pyproject.toml` includes all required files and dependencies |
-| `tests/test_version.py` | Ensures version is bumped before release |
+The test suite (`tests/test_distribution.py`) validates:
 
-### Key Tests
+| Test | Purpose |
+|------|---------|
+| `test_required_files_in_wheel` | Ensures `server.py` and `config.py` are included in the wheel |
+| `test_required_dependencies` | Verifies all runtime dependencies are listed |
+| `test_entry_point_configured` | Confirms CLI entry point is defined |
+| `test_modules_import` | Catches import errors from missing files/dependencies |
 
-- **Import Tests**: Catch missing dependencies or modules not included in the package (like the `config.py` issue)
-- **Package Validation**: Ensures `pyproject.toml` correctly includes all files needed for distribution
-- **Version Validation**: Compares local version against PyPI to ensure you've bumped the version before publishing
+These tests specifically target issues that have caused runtime failures (missing modules, missing dependencies).
 
 ### Continuous Integration
 
@@ -699,31 +729,6 @@ Tests run automatically on:
 - Before publishing to PyPI (publishing is blocked if tests fail)
 
 The CI workflow tests against Python 3.10, 3.11, 3.12, and 3.13 to ensure compatibility.
-
-### Writing New Tests
-
-When adding new functionality:
-
-1. Add tests in the appropriate test file or create a new one in `tests/`
-2. Use pytest fixtures from `tests/conftest.py` for common test data
-3. Mock external API calls using `unittest.mock.patch`
-4. Run tests locally before pushing
-
-Example test structure:
-
-```python
-from unittest.mock import patch, MagicMock
-
-class TestMyFeature:
-    """Tests for my new feature."""
-
-    @patch('server.requests.get')
-    def test_feature_success(self, mock_get):
-        """Test successful scenario."""
-        mock_get.return_value = MagicMock(json=lambda: {"data": "test"})
-        # Your test code here
-        assert result == expected
-```
 
 ## Publishing & Distribution
 
