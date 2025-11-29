@@ -24,6 +24,7 @@ settings = Settings()
 
 
 # Logging configuration
+# Note: Uses stderr to avoid interfering with MCP STDIO transport
 logging_config = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -36,7 +37,7 @@ logging_config = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "default",
-            "stream": "ext://sys.stdout",
+            "stream": "ext://sys.stderr",
         },
     },
     "root": {

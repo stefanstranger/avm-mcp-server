@@ -30,7 +30,7 @@ def log(message: str, level: str = "info"):
     log_func = getattr(logger, level.lower(), logger.info)
     log_func(message)
 
-mcp = FastMCP("AVM MCP Server", "0.1.4")
+mcp = FastMCP("AVM MCP Server", "0.1.5")
 
 
 @mcp.tool()
@@ -244,8 +244,9 @@ async def run_stdio() -> None:
     """
     Run the MCP server with STDIO transport.
     """
-    log("Starting MCP server with STDIO transport")
-    log("Server will communicate via standard input/output")
+    # Suppress logging in STDIO mode to avoid interfering with JSON-RPC communication
+    # Even though we log to stderr, some MCP clients may be sensitive to extra output
+    logging.getLogger().setLevel(logging.WARNING)
     
     from mcp.server.stdio import stdio_server
     

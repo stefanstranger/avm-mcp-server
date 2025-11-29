@@ -202,7 +202,7 @@ or mcp.json for Visual Code mcp configuration.
    "command": "uvx",
    "args": [
     "--from",
-    "git+https://github.com/stefanstranger/avm-mcp-server@v0.1.4",
+    "git+https://github.com/stefanstranger/avm-mcp-server@v0.1.5",
     "avm-mcp-server"
    ]
   }
@@ -221,7 +221,7 @@ This approach:
 To use a specific version/tag, modify the GitHub URL:
 
 ```json
-"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.4"
+"git+https://github.com/stefanstranger/avm-mcp-server@v0.1.5"
 ```
 
 #### Option 2: Using Local Installation
@@ -264,7 +264,7 @@ uvx --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server
 Or with a specific version:
 
 ```powershell
-uvx --from git+https://github.com/stefanstranger/avm-mcp-server@v0.1.4 avm-mcp-server
+uvx --from git+https://github.com/stefanstranger/avm-mcp-server@v0.1.5 avm-mcp-server
 ```
 
 ### Using Local Installation
@@ -317,11 +317,8 @@ curl -X POST http://localhost:8080/mcp/ \
   }'
 ```
 
-**Note**: The MCP endpoint (`/mcp/`) requires a trailing slash and expects POST requests with JSON-RPC formatted data. For easier testing, use the convenience tools endpoint (`/tools`) or the example script:
+**Note**: The MCP endpoint (`/mcp/`) requires a trailing slash and expects POST requests with JSON-RPC formatted data.
 
-```bash
-python example_http_usage.py
-```
 
 #### 3. SSE Transport
 
@@ -353,24 +350,123 @@ MCP_DEBUG=false
 LOG_LEVEL=INFO
 ```
 
+### Running with Docker
+
+For containerized deployments, use the included Dockerfile:
+
+```bash
+# Build the image
+docker build -t avm-mcp-server .
+
+# Run the container
+docker run -p 8080:8080 avm-mcp-server
+```
+
+The container runs in HTTP transport mode on port 8080 by default. To use a different port:
+
+```bash
+docker run -p 9000:8080 avm-mcp-server
+```
+
+To run with SSE transport instead:
+
+```bash
+docker run -p 8080:8080 avm-mcp-server python server.py --transport sse --port 8080
+```
+
+### Quick Setup for Linux/macOS
+
+For local development on Linux or macOS, use the setup script to quickly create a virtual environment and install dependencies:
+
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+This script:
+
+- Checks for Python 3 installation
+- Creates a virtual environment (`.venv`)
+- Installs all dependencies from `requirements.txt`
+- Verifies imports work correctly
+
+**Note**: For Windows users or those using UV, follow the standard [Installation](#-installation) steps instead.
+
 ### Inspect MCP Server
 
-Using the MCP Inspector with uvx:
+The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) is a useful tool for testing and debugging MCP servers.
+
+#### STDIO Transport (Default)
+
+Using uvx from GitHub:
 
 ```powershell
 npx @modelcontextprotocol/inspector uvx --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server
 ```
 
-Using the MCP Inspector with local installation:
+Using local installation:
 
 ```powershell
 npx @modelcontextprotocol/inspector uv run --with mcp[cli] mcp run c://github//avm-mcp-server//server.py
 ```
 
-Using mcptools:
+#### HTTP Transport
+
+First, start the server in HTTP mode:
 
 ```powershell
+python server.py --transport http --port 8080
+```
+
+Then open the MCP Inspector web UI and connect to the HTTP endpoint:
+
+```powershell
+npx @modelcontextprotocol/inspector
+```
+
+In the Inspector UI, enter `http://localhost:8080/mcp/` as the server URL and select "Streamable HTTP" as the transport type.
+
+Alternatively, use curl to verify the server is running:
+
+```powershell
+# Check the tools endpoint
+curl http://localhost:8080/tools
+
+# Or test the MCP endpoint directly
+curl -X POST http://localhost:8080/mcp/ `
+  -H "Content-Type: application/json" `
+  -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}'
+```
+
+#### SSE Transport
+
+First, start the server in SSE mode:
+
+```powershell
+python server.py --transport sse --port 8080
+```
+
+Then open the MCP Inspector web UI:
+
+```powershell
+npx @modelcontextprotocol/inspector
+```
+
+In the Inspector UI, enter `http://localhost:8080/sse` as the server URL and select "SSE" as the transport type.
+
+#### Using mcptools
+
+[mcptools](https://github.com/mcptools/mcptools) provides an alternative way to inspect MCP servers:
+
+```powershell
+# STDIO transport
 mcptools web cmd /c "uvx.exe --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server"
+
+# List tools
+mcptools tools cmd /c "uvx.exe --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server"
+
+# Call a specific tool
+mcptools call list_avm_modules --modulename "storage" cmd /c "uvx.exe --from git+https://github.com/stefanstranger/avm-mcp-server avm-mcp-server"
 ```
 
 ## 📖 Available Tools
@@ -594,6 +690,46 @@ A prompt to suggest an AVM for a specific Azure service.
    - Ensure the path in `claude_desktop_config.json` is correct
    - Review Claude Desktop logs for detailed error messages
 
+## 🧪 Testing
+
+The project includes a comprehensive test suite to ensure code quality and catch issues before release.
+
+### Running Tests
+
+```powershell
+# Install dev dependencies
+uv sync --dev
+
+# Run all tests
+uv run pytest
+
+# Run tests with verbose output
+uv run pytest -v
+```
+
+### What the Tests Check
+
+The test suite (`tests/test_distribution.py`) validates:
+
+| Test | Purpose |
+|------|---------|
+| `test_required_files_in_wheel` | Ensures `server.py` and `config.py` are included in the wheel |
+| `test_required_dependencies` | Verifies all runtime dependencies are listed |
+| `test_entry_point_configured` | Confirms CLI entry point is defined |
+| `test_modules_import` | Catches import errors from missing files/dependencies |
+
+These tests specifically target issues that have caused runtime failures (missing modules, missing dependencies).
+
+### Continuous Integration
+
+Tests run automatically on:
+
+- Every push to `main` and `feature/**` branches
+- Every pull request to `main`
+- Before publishing to PyPI (publishing is blocked if tests fail)
+
+The CI workflow tests against Python 3.10, 3.11, 3.12, and 3.13 to ensure compatibility.
+
 ## Publishing & Distribution
 
 This server is published to both PyPI and the MCP Registry for easy installation and discovery.
@@ -618,28 +754,33 @@ This server is registered in the [MCP Registry](https://registry.modelcontextpro
 
 ### For Developers: Publishing Updates
 
-The project uses automated GitHub Actions workflows to publish new versions:
+The project uses automated GitHub Actions workflows to publish new versions. Publishing is triggered automatically when a feature branch is merged to `main` with a version bump.
 
-1. **Update Version Numbers**:
+1. **Update Version Numbers** (in your feature branch):
    - `pyproject.toml` - Package version
-   - `server.json` - MCP registry version
    - `server.py` - FastMCP instance version
 
-2. **Commit and Tag**:
+2. **Create PR and Merge**:
 
    ```powershell
-   git add pyproject.toml server.json server.py
+   # On your feature branch
+   git add pyproject.toml server.py
    git commit -m "Bump version to X.Y.Z"
    git push
-   git tag vX.Y.Z
-   git push origin vX.Y.Z
+   # Create PR and merge to main
    ```
 
-3. **Automated Workflow**:
-   - GitHub Actions builds the package
-   - Publishes to PyPI (requires `PYPI_API_TOKEN` secret)
+3. **Automated Workflow** (triggered on merge to main):
+   - Detects version change in `pyproject.toml`
+   - Runs all tests across Python 3.10-3.13
+   - Creates git tag `vX.Y.Z` automatically
+   - Builds and publishes to PyPI
+   - Updates `server.json` with new version
    - Authenticates with MCP Registry via GitHub OIDC
    - Publishes to MCP Registry
+   - Creates GitHub Release with release notes
+
+**Note**: The workflow only triggers when `pyproject.toml` changes and the version doesn't already have a tag. This prevents duplicate publishes.
 
 ### Manual Publishing (First Time)
 
