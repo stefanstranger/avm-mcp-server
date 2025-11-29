@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Check Version Bump",
+      "type": "shell",
+      "command": "uv",
+      "args": ["run", "python", "scripts/check_version.py"],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "uv",
+      "args": ["run", "pytest", "tests/", "-v"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    }
+  ]
+}
